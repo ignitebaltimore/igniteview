@@ -1,0 +1,143 @@
+<style>
+  h1, h2 {
+    font-family: "League Gothic", "Sans Serif";
+    color: white;
+  }
+
+</style>
+
+<div id="title_slide" style="display: none;">
+  <h1 id='speaker_name'></h1>
+  <h2 id='talk_title'></h2>
+</div>
+
+<div id="slides" style="display: none;">
+  <canvas id="the-canvas" style="width: 1024x768;"></canvas>
+</div>
+
+<script id="script">
+  // all of this was adapted from pdf.js code
+  PDFJS.workerSrc = '<%= asset_path('pdf.worker.js') %>';
+
+  var pdfDoc = null,
+      pageNum = 1,
+      pageRendering = false,
+      pageNumPending = null,
+      scale = 1.0, //0.8,
+      canvas = document.getElementById('the-canvas'),
+      ctx = canvas.getContext('2d'),
+      speakerName = $("#speaker_name"),
+      talkTitle = $("#talk_title"),
+      titleView = $("#title_slide"),
+      slideView = $("#slides"),
+      talkNum = null;
+
+  /**
+   * Get page info from document, resize canvas accordingly, and render page.
+   * @param num Page number.
+   */
+  function renderPage(num) {
+    pageRendering = true;
+    // Using promise to fetch the page
+    pdfDoc.getPage(num).then(function(page) {
+      var viewport = page.getViewport(scale);
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      // Render PDF page into canvas context
+      var renderContext = {
+        canvasContext: ctx,
+        viewport: viewport
+      };
+      var renderTask = page.render(renderContext);
+
+      // Wait for rendering to finish
+      renderTask.promise.then(function () {
+        pageRendering = false;
+        if (pageNumPending !== null) {
+          // New page rendering is pending
+          renderPage(pageNumPending);
+          pageNumPending = null;
+        }
+      });
+    });
+  }
+
+  /**
+   * If another page rendering in progress, waits until the rendering is
+   * finised. Otherwise, executes rendering immediately.
+   */
+  function queueRenderPage(num) {
+    if (pageRendering) {
+      pageNumPending = num;
+    } else {
+      renderPage(num);
+    }
+  }
+
+  /**
+   * Displays previous page.
+   */
+  function onPrevPage() {
+    if (pageNum <= 1) {
+      return;
+    }
+    pageNum--;
+    queueRenderPage(pageNum);
+  }
+
+  /**
+   * Displays next page.
+   */
+  function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
+      return;
+    }
+    pageNum++;
+    queueRenderPage(pageNum);
+  }
+
+  /**
+   * Asynchronously downloads PDF.
+   */
+  function presentDocument(url) {
+    pageNum = 1;
+    PDFJS.getDocument(url).then(function (pdfDoc_) {
+      pdfDoc = pdfDoc_;
+      // Initial/first page rendering
+      renderPage(pageNum);
+    });
+  };
+
+  function renderTalk(talkNum) {
+    slideView.hide();
+    titleView.hide();
+
+    var talk = talkData.talks[talkNum];
+
+    if (talk) {
+      speakerName.html(talk.speaker_name);
+      talkTitle.html(talk.title);
+      titleView.show();
+    }
+  };
+
+  var talkData = <%= talks_data.html_safe %>;
+
+  $(window).keypress(function(event) {
+    if (talkNum === null) {
+      talkNum = 0;
+    } else {
+      switch(event.keyCode) {
+        case 110: // "n"
+          talkNum = talkNum + 1;
+          break;
+        case 112: // "p"
+          talkNum = talkNum - 1;
+          break;
+      };
+    }
+
+    renderTalk(talkNum);
+  });
+</script>
