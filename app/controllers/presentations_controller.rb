@@ -14,8 +14,8 @@ class PresentationsController < ApplicationController
   # @note
   #   This is obviously super dangerous to run on the Internet;
   #   this code is intended for local use only
-  def show
-    path = Pathname(params[:id])
+  def files
+    path = Pathname(params[:talk_path])
 
     unless path.exist?
       msg = "'#{path}' does not exist"
