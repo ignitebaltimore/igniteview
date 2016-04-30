@@ -11,6 +11,7 @@ var pdfDoc = null,
     titleView = null,
     slideView = null,
     intervalId = null,
+    talkIndex = null,
     talkNum = 0,
     advanceIntervalId = null,
     appState = "new";
@@ -80,6 +81,7 @@ function presentDocument(file_path) {
 };
 
 function blankScreenAndPause() {
+  talkIndex.hide();
   clearInterval(advanceIntervalId);
   slideView.hide();
   titleView.hide();
@@ -155,16 +157,15 @@ function startAdvancingSlides() {
   advanceIntervalId = setInterval(next,15000);
 }
 
-function presentFirstTalk() {
-  var talkNumHash = location.hash.split("=")[1];
+function onHashChange() {
+  var talkNumHash = location.hash.split("#")[1];
 
   if (talkNumHash) {
     blankScreenAndPause();
     talkNum = Number(talkNumHash);
     console.info("Skipping to talk #" + talkNum);
+    presentTalk();
   }
-
-  presentTalk();
 }
 
 function start() {
@@ -176,6 +177,7 @@ function start() {
   talkTitle = $("#talk_title");
   titleView = $("#title_slide");
   slideView = $("#slides");
+  talkIndex = $("#talk_index");
 
   $(document).keypress(function(event) {
     switch(event.keyCode) {
@@ -189,6 +191,6 @@ function start() {
     }
   });
 
-  presentFirstTalk();
-  $(window).bind("hashchange",presentFirstTalk);
+  onHashChange();
+  $(window).bind("hashchange",onHashChange);
 }

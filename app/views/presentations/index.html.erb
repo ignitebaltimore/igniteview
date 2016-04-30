@@ -1,3 +1,10 @@
+<ul id='talk_index'>
+  <%- talks.each_with_index do |talk,talk_num| %>
+    <%- next if talk.speaker_name.blank? %>
+    <li><%= link_to(talk.speaker_name,anchor: talk_num) %></li>
+  <% end %>
+</ul>
+
 <div id="title_slide" style="display: none;">
   <h1 id='talk_title'></h2>
   <h2 id='speaker_name'></h1>
@@ -9,7 +16,7 @@
 
 <script id="script">
   PDFJS.workerSrc = '<%= asset_path('pdf.worker.js') %>';
-  var talkData = <%= talks_data.html_safe %>;
+  var talkData = <%= talk_data.html_safe %>;
 
   $(start());
 </script>

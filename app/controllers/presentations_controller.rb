@@ -1,21 +1,16 @@
 class PresentationsController < ApplicationController
-  helper_method :talks_data
+  helper_method :talk_data, :talks
 
   def index
-    talks_path = Pathname(params[:talks_path])
-
-    unless talks_path.exist?
-      raise "Cannot find '#{talks_path}'"
-    end
-
-    @talks_data = talks_path.read
+    @talk_data = Rails.configuration.x.talk_data
+    @talks = Rails.configuration.x.talks
   end
 
   # @note
   #   This is obviously super dangerous to run on the Internet;
   #   this code is intended for local use only
   def files
-    path = Pathname(params[:talk_path])
+    path = Rails.configuration.x.talk_path.join(params.require(:talk_path))
 
     unless path.exist?
       msg = "'#{path}' does not exist"
@@ -30,5 +25,5 @@ class PresentationsController < ApplicationController
 
   private
 
-  attr_reader :title, :talks_data, :intermission_after_talk_number
+  attr_reader :title, :talk_data, :intermission_after_talk_number, :talks
 end
